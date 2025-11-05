@@ -1,49 +1,68 @@
-﻿Public Class Form1
-    Private Sub btnLogin_Click(sender As Object, e As EventArgs) Handles btnLogIn.Click
-        Dim username As String = txtUsername.Text
-        Dim password As String = txtPassword.Text
+Imports MySql.Data.MySqlClient
 
-        ' Hard-coded login examples
-        If username = "admin" And password = "admin123" Then
-            MessageBox.Show("Welcome Admin!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            Form6.Show()
-            Me.Hide()
+Public Class Form1
+    Private connectionString As String = "Server=localhost;User Id=root;Password=;Database=roomschedulingdb;"
 
-        ElseIf username = "student" And password = "stud123" Then
-            MessageBox.Show("Welcome Student!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            Form3.Show()
-            Me.Hide()
+    Private Sub btnLogIn_Click(sender As Object, e As EventArgs) Handles btnLogIn.Click
+        Dim username = txtUsername.Text.Trim()
+        Dim password = txtPassword.Text ' plain text for now
 
-        ElseIf username = "professor" And password = "prof123" Then
-            MessageBox.Show("Welcome Professor!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            Form4.Show()
-            Me.Hide()
-
-        Else
-            MessageBox.Show("Invalid Username or Password!", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            txtPassword.Clear()
-            txtUsername.Focus()
+        If username = "" OrElse password = "" Then
+            MessageBox.Show("Enter username and password.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
         End If
+
+        Try
+            Using conn As New MySqlConnection(connectionString)
+                conn.Open()
+                Dim sql As String = "SELECT user_id, username, role FROM users WHERE username=@u AND password=@p LIMIT 1"
+                Using cmd As New MySqlCommand(sql, conn)
+                    cmd.Parameters.AddWithValue("@u", username)
+                    cmd.Parameters.AddWithValue("@p", password)
+                    Using reader = cmd.ExecuteReader()
+                        If reader.Read() Then
+                            Session.UserId = Convert.ToInt32(reader("user_id"))
+                            Session.Username = reader("username").ToString()
+                            Session.Role = reader("role").ToString()
+
+                            Select Case Session.Role.ToLower()
+                                Case "admin"
+                                    Dim f6 As New Form6()
+                                    f6.Show()
+                                    Me.Hide()
+                                Case "student"
+                                    Dim f3 As New Form3()
+                                    f3.Show()
+                                    Me.Hide()
+                                Case "professor"
+                                    Dim f4 As New Form4()
+                                    f4.Show()
+                                    Me.Hide()
+                                Case Else
+                                    MessageBox.Show("Unknown role.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                            End Select
+                        Else
+                            MessageBox.Show("Invalid Username or Password!", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                            txtPassword.Clear()
+                            txtUsername.Focus()
+                        End If
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Database error: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    ' LinkLabel click opens CreateAccountForm
     Private Sub LinkCreateAccount_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles LinkCreateAccount.LinkClicked
-        Form2.Show()
+        Dim f2 As New Form2()
+        f2.Show()
         Me.Hide()
-
     End Sub
 
     Private Sub btnClose_Click(sender As Object, e As EventArgs) Handles btnClose.Click
-
-        Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit?",
-                                                "Exit Program",
-                                                MessageBoxButtons.YesNo,
-                                                MessageBoxIcon.Question)
-        If result = DialogResult.No Then
-            Return
-        Else
+        If MessageBox.Show("Exit program?", "Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
             Application.Exit()
         End If
     End Sub
-
 End Class

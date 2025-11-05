@@ -24,7 +24,7 @@ Partial Class Form6
     Private Sub InitializeComponent()
         Me.TabControl1 = New System.Windows.Forms.TabControl()
         Me.TabPage1 = New System.Windows.Forms.TabPage()
-        Me.dgvPending = New System.Windows.Forms.DataGridView()
+        Me.dgvRequests = New System.Windows.Forms.DataGridView()
         Me.Column1 = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.Column2 = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.Column3 = New System.Windows.Forms.DataGridViewTextBoxColumn()
@@ -42,7 +42,7 @@ Partial Class Form6
         Me.btnExit = New System.Windows.Forms.Button()
         Me.TabControl1.SuspendLayout()
         Me.TabPage1.SuspendLayout()
-        CType(Me.dgvPending, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.dgvRequests, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TabPage2.SuspendLayout()
         CType(Me.dgvSchedule, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -61,7 +61,7 @@ Partial Class Form6
         'TabPage1
         '
         Me.TabPage1.BackColor = System.Drawing.Color.DimGray
-        Me.TabPage1.Controls.Add(Me.dgvPending)
+        Me.TabPage1.Controls.Add(Me.dgvRequests)
         Me.TabPage1.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.TabPage1.Location = New System.Drawing.Point(4, 29)
         Me.TabPage1.Name = "TabPage1"
@@ -70,17 +70,17 @@ Partial Class Form6
         Me.TabPage1.TabIndex = 0
         Me.TabPage1.Text = " Pending Requests:"
         '
-        'dgvPending
+        'dgvRequests
         '
-        Me.dgvPending.BackgroundColor = System.Drawing.Color.DimGray
-        Me.dgvPending.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvPending.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.Column1, Me.Column2, Me.Column3, Me.Column4, Me.Column5, Me.Column6})
-        Me.dgvPending.Location = New System.Drawing.Point(6, 15)
-        Me.dgvPending.Name = "dgvPending"
-        Me.dgvPending.RowHeadersWidth = 62
-        Me.dgvPending.RowTemplate.Height = 28
-        Me.dgvPending.Size = New System.Drawing.Size(964, 448)
-        Me.dgvPending.TabIndex = 0
+        Me.dgvRequests.BackgroundColor = System.Drawing.Color.DimGray
+        Me.dgvRequests.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvRequests.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.Column1, Me.Column2, Me.Column3, Me.Column4, Me.Column5, Me.Column6})
+        Me.dgvRequests.Location = New System.Drawing.Point(6, 15)
+        Me.dgvRequests.Name = "dgvRequests"
+        Me.dgvRequests.RowHeadersWidth = 62
+        Me.dgvRequests.RowTemplate.Height = 28
+        Me.dgvRequests.Size = New System.Drawing.Size(964, 448)
+        Me.dgvRequests.TabIndex = 0
         '
         'Column1
         '
@@ -223,7 +223,7 @@ Partial Class Form6
         Me.Text = "Form6"
         Me.TabControl1.ResumeLayout(False)
         Me.TabPage1.ResumeLayout(False)
-        CType(Me.dgvPending, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.dgvRequests, System.ComponentModel.ISupportInitialize).EndInit()
         Me.TabPage2.ResumeLayout(False)
         CType(Me.dgvSchedule, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
@@ -233,7 +233,7 @@ Partial Class Form6
     Friend WithEvents TabControl1 As TabControl
     Friend WithEvents TabPage1 As TabPage
     Friend WithEvents TabPage2 As TabPage
-    Friend WithEvents dgvPending As DataGridView
+    Friend WithEvents dgvRequests As DataGridView
     Friend WithEvents Column1 As DataGridViewTextBoxColumn
     Friend WithEvents Column2 As DataGridViewTextBoxColumn
     Friend WithEvents Column3 As DataGridViewTextBoxColumn

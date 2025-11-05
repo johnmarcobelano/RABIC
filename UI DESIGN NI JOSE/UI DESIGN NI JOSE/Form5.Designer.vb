@@ -22,7 +22,6 @@ Partial Class Form5
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.components = New System.ComponentModel.Container()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
@@ -32,8 +31,7 @@ Partial Class Form5
         Me.cmbTimeSlot = New System.Windows.Forms.ComboBox()
         Me.dtpDate = New System.Windows.Forms.DateTimePicker()
         Me.txtPurpose = New System.Windows.Forms.TextBox()
-        Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
-        Me.btnRequest = New System.Windows.Forms.Button()
+        Me.btnSubmit = New System.Windows.Forms.Button()
         Me.btnCancel = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
@@ -140,24 +138,18 @@ Partial Class Form5
         Me.txtPurpose.Size = New System.Drawing.Size(427, 126)
         Me.txtPurpose.TabIndex = 12
         '
-        'ContextMenuStrip1
+        'btnSubmit
         '
-        Me.ContextMenuStrip1.ImageScalingSize = New System.Drawing.Size(24, 24)
-        Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
-        Me.ContextMenuStrip1.Size = New System.Drawing.Size(61, 4)
-        '
-        'btnRequest
-        '
-        Me.btnRequest.BackColor = System.Drawing.Color.MidnightBlue
-        Me.btnRequest.FlatStyle = System.Windows.Forms.FlatStyle.Popup
-        Me.btnRequest.Font = New System.Drawing.Font("Arial Rounded MT Bold", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnRequest.ForeColor = System.Drawing.Color.White
-        Me.btnRequest.Location = New System.Drawing.Point(22, 615)
-        Me.btnRequest.Name = "btnRequest"
-        Me.btnRequest.Size = New System.Drawing.Size(212, 78)
-        Me.btnRequest.TabIndex = 14
-        Me.btnRequest.Text = "SUBMIT REQUEST"
-        Me.btnRequest.UseVisualStyleBackColor = False
+        Me.btnSubmit.BackColor = System.Drawing.Color.MidnightBlue
+        Me.btnSubmit.FlatStyle = System.Windows.Forms.FlatStyle.Popup
+        Me.btnSubmit.Font = New System.Drawing.Font("Arial Rounded MT Bold", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnSubmit.ForeColor = System.Drawing.Color.White
+        Me.btnSubmit.Location = New System.Drawing.Point(22, 615)
+        Me.btnSubmit.Name = "btnSubmit"
+        Me.btnSubmit.Size = New System.Drawing.Size(212, 78)
+        Me.btnSubmit.TabIndex = 14
+        Me.btnSubmit.Text = "SUBMIT REQUEST"
+        Me.btnSubmit.UseVisualStyleBackColor = False
         '
         'btnCancel
         '
@@ -179,7 +171,7 @@ Partial Class Form5
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(462, 711)
         Me.Controls.Add(Me.btnCancel)
-        Me.Controls.Add(Me.btnRequest)
+        Me.Controls.Add(Me.btnSubmit)
         Me.Controls.Add(Me.txtPurpose)
         Me.Controls.Add(Me.dtpDate)
         Me.Controls.Add(Me.cmbTimeSlot)
@@ -207,7 +199,6 @@ Partial Class Form5
     Friend WithEvents cmbTimeSlot As ComboBox
     Friend WithEvents dtpDate As DateTimePicker
     Friend WithEvents txtPurpose As TextBox
-    Friend WithEvents ContextMenuStrip1 As ContextMenuStrip
-    Friend WithEvents btnRequest As Button
+    Friend WithEvents btnSubmit As Button
     Friend WithEvents btnCancel As Button
 End Class

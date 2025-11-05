@@ -1,101 +1,122 @@
-﻿Public Class Form6
-    Private actionMenu As ContextMenuStrip
-    Private selectedRowIndex As Integer = -1
+﻿Imports MySql.Data.MySqlClient
+
+Public Class Form6
+    Private connectionString As String = "Server=localhost;User Id=root;Password=;Database=roomschedulingdb;"
 
     Private Sub Form6_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Setup dgvPending
-        With dgvPending
-            .AllowUserToAddRows = False
-            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
-            .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-            .Columns.Clear()
-
-            .Columns.Add("Professor", "Professor")
-            .Columns.Add("Room", "Room")
-            .Columns.Add("Date", "Date")
-            .Columns.Add("Time", "Time")
-            .Columns.Add("Purpose", "Purpose")
-
-            Dim btnAction As New DataGridViewButtonColumn()
-            btnAction.HeaderText = "Action"
-            btnAction.Text = "Action"
-            btnAction.UseColumnTextForButtonValue = True
-            .Columns.Add(btnAction)
-        End With
-
-        AddHandler dgvPending.CellContentClick, AddressOf dgvPending_CellContentClick
-        AddHandler dgvPending.RowsAdded, AddressOf dgvPending_RowsAdded
-
-        ' Context menu for Action button
-        actionMenu = New ContextMenuStrip()
-        actionMenu.Items.Add("Approve")
-        actionMenu.Items.Add("Reject")
-        AddHandler actionMenu.ItemClicked, AddressOf actionMenu_ItemClicked
+        SetupGrid()
+        LoadRequests()
     End Sub
 
-    ' Method to allow Form5 to send requests
-    Public Sub AddPendingRequest(professor As String, room As String, [date] As String, time As String, purpose As String)
-        Dim rowIndex = dgvPending.Rows.Add(professor, room, [date], time, purpose)
-        dgvPending.Rows(rowIndex).DefaultCellStyle.BackColor = Color.LightYellow
+    Private Sub SetupGrid()
+        dgvRequests.Columns.Clear()
+        ' hidden request id
+        Dim colRequestId As New DataGridViewTextBoxColumn()
+        colRequestId.Name = "request_id"
+        colRequestId.Visible = False
+        dgvRequests.Columns.Add(colRequestId)
+
+        dgvRequests.Columns.Add("Room", "Room")
+        dgvRequests.Columns.Add("Date", "Date")
+        dgvRequests.Columns.Add("Time", "Time")
+        dgvRequests.Columns.Add("Professor", "Professor")
+        dgvRequests.Columns.Add("Purpose", "Purpose")
+
+        Dim colReqDate As New DataGridViewTextBoxColumn()
+        colReqDate.Name = "RequestDate"
+        dgvRequests.Columns.Add(colReqDate)
+
+        Dim colStatus As New DataGridViewTextBoxColumn()
+        colStatus.Name = "Status"
+        dgvRequests.Columns.Add(colStatus)
+
+        Dim btnApprove As New DataGridViewButtonColumn()
+        btnApprove.HeaderText = "Approve"
+        btnApprove.Name = "ApproveBtn"
+        btnApprove.Text = "Approve"
+        btnApprove.UseColumnTextForButtonValue = True
+        dgvRequests.Columns.Add(btnApprove)
+
+        Dim btnReject As New DataGridViewButtonColumn()
+        btnReject.HeaderText = "Reject"
+        btnReject.Name = "RejectBtn"
+        btnReject.Text = "Reject"
+        btnReject.UseColumnTextForButtonValue = True
+        dgvRequests.Columns.Add(btnReject)
     End Sub
 
-    ' Highlight Pending rows
-    Private Sub dgvPending_RowsAdded(sender As Object, e As DataGridViewRowsAddedEventArgs)
-        For i As Integer = e.RowIndex To e.RowIndex + e.RowCount - 1
-            dgvPending.Rows(i).DefaultCellStyle.BackColor = Color.LightYellow
-        Next
+    Public Sub LoadRequests()
+        dgvRequests.Rows.Clear()
+        Try
+            Using conn As New MySqlConnection(connectionString)
+                conn.Open()
+                Dim sql As String =
+                    "SELECT r.request_id, rs.room, rs.date, rs.time, u.username AS professor_username, r.purpose, r.request_date, r.status
+                     FROM requests r
+                     JOIN room_schedule rs ON r.schedule_id = rs.schedule_id
+                     JOIN users u ON r.professor_user_id = u.user_id
+                     ORDER BY r.request_date DESC"
+                Using cmd As New MySqlCommand(sql, conn)
+                    Using rdr = cmd.ExecuteReader()
+                        While rdr.Read()
+                            dgvRequests.Rows.Add(
+                                rdr("request_id"),
+                                rdr("room").ToString(),
+                                rdr("date").ToString(),
+                                rdr("time").ToString(),
+                                rdr("professor_username").ToString(),
+                                rdr("purpose").ToString(),
+                                Convert.ToDateTime(rdr("request_date")).ToString("yyyy-MM-dd HH:mm"),
+                                rdr("status").ToString()
+                            )
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Load error: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    ' Handle Action button click in Pending Requests
-    Private Sub dgvPending_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
+    Private Sub dgvRequests_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvRequests.CellContentClick
         If e.RowIndex < 0 Then Return
-        If TypeOf dgvPending.Columns(e.ColumnIndex) Is DataGridViewButtonColumn Then
-            selectedRowIndex = e.RowIndex
-            Dim rect As Rectangle = dgvPending.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, True)
-            actionMenu.Show(dgvPending, rect.Left, rect.Bottom)
-        End If
-    End Sub
+        Dim colName = dgvRequests.Columns(e.ColumnIndex).Name
+        If colName <> "ApproveBtn" AndAlso colName <> "RejectBtn" Then Return
 
-    ' Handle context menu clicks
-    Private Sub actionMenu_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs)
-        If selectedRowIndex < 0 Then Return
-        Dim row = dgvPending.Rows(selectedRowIndex)
-        Dim professor As String = row.Cells("Professor").Value.ToString()
-        Dim room As String = row.Cells("Room").Value.ToString()
-        Dim [date] As String = row.Cells("Date").Value.ToString()
-        Dim time As String = row.Cells("Time").Value.ToString()
+        Dim requestId As Integer = Convert.ToInt32(dgvRequests.Rows(e.RowIndex).Cells("request_id").Value)
+        Dim newStatus As String = If(colName = "ApproveBtn", "Approved", "Rejected")
 
-        Select Case e.ClickedItem.Text
-            Case "Approve"
-                ' Add to approved schedule (assuming you have dgvSchedule)
-                dgvSchedule.Rows.Add(room, [date], time, professor, "F2F")
-                dgvPending.Rows.RemoveAt(selectedRowIndex)
-                MessageBox.Show($"Request approved for {professor} in room {room}.")
-            Case "Reject"
-                row.DefaultCellStyle.BackColor = Color.LightCoral
-                Application.DoEvents()
-                Threading.Thread.Sleep(300)
-                dgvPending.Rows.RemoveAt(selectedRowIndex)
-                MessageBox.Show($"Request rejected for {professor}.")
-        End Select
-
-        selectedRowIndex = -1
+        Try
+            Using conn As New MySqlConnection(connectionString)
+                conn.Open()
+                Using cmd As New MySqlCommand("UPDATE requests SET status=@s WHERE request_id=@rid", conn)
+                    cmd.Parameters.AddWithValue("@s", newStatus)
+                    cmd.Parameters.AddWithValue("@rid", requestId)
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+            MessageBox.Show("Request " & newStatus & ".", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            LoadRequests()
+        Catch ex As Exception
+            MessageBox.Show("Error updating request: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
-        Dim loginForm As Form1 = Application.OpenForms.OfType(Of Form1)().FirstOrDefault()
+        If MessageBox.Show("Are you sure you want to exit and return to Login?",
+                       "Exit Confirmation",
+                       MessageBoxButtons.YesNo,
+                       MessageBoxIcon.Question) = DialogResult.Yes Then
 
-        If loginForm Is Nothing Then
-            loginForm = New Form1()
+            'Find existing Form1 instance or create new one
+            Dim loginForm As Form1 = Application.OpenForms.OfType(Of Form1)().FirstOrDefault()
+            If loginForm Is Nothing Then
+                loginForm = New Form1()
+            End If
+
+            loginForm.Show()
+            Me.Hide() 'Use Hide to avoid issues if used multiple times
         End If
 
-        ' Clear login fields
-        loginForm.txtUsername.Clear()
-        loginForm.txtPassword.Clear()
-
-        loginForm.Show()
-        Me.Close()
     End Sub
-
-
 End Class

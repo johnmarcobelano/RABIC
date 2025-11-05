@@ -1,107 +1,115 @@
-﻿Public Class Form4
-    ' Example data source
-    Private ScheduleList As New List(Of ScheduleItem) From {
-        New ScheduleItem("202", "Sat", "2:30 - 4:00", "Lecture", "Bachelor of Science in Information Technology"),
-        New ScheduleItem("101", "Mon", "9:00 - 10:30", "Lab", "Bachelor of Science in Computer Science"),
-        New ScheduleItem("305", "Wed", "1:00 - 3:00", "Seminar", "Bachelor of Science in Business Administration"),
-        New ScheduleItem("202", "Fri", "10:00 - 11:30", "Lecture", "Bachelor of Science in Information Technology"),
-        New ScheduleItem("405", "Tue", "2:00 - 4:00", "Project", "Bachelor of Science in Industrial Engineering")
-    }
+﻿Imports MySql.Data.MySqlClient
 
-    Private Sub ProfessorForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Fill ComboBox with programs/majors
-        cmbDepartment.Items.AddRange(New String() {
-            "Bachelor of Science in Psychology",
-            "Bachelor of Science in Accountancy",
-            "Bachelor of Science in Customs Administration",
-            "Bachelor of Science in Business Administration",
-            "Major in Marketing Management",
-            "Major in Financial Management",
-            "Major in Human Resource Development Management",
-            "Bachelor of Science in Criminology",
-            "Bachelor of Science in Computer Science",
-            "Bachelor of Science in Information Technology",
-            "Bachelor of Elementary Education",
-            "Bachelor of Secondary Education",
-            "Major in English",
-            "Major in Filipino",
-            "Major in Mathematics",
-            "Bachelor of Technical Vocational for Teacher Education",
-            "Major in Automotive Technology",
-            "Major in Computer Programming",
-            "Major in Food Service Management",
-            "Major in Electronics Technology",
-            "Major in Welding and Fabrication",
-            "Bachelor of Science in Industrial Engineering",
-            "Bachelor of Science in Computer Engineering"
-        })
+Public Class Form4
+    Private connectionString As String = "Server=localhost;User Id=root;Password=;Database=roomschedulingdb;"
 
-        cmbDepartment.SelectedIndex = 0 ' default selection
+    Private Sub Form4_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LoadDepartments()
+        SetupScheduleGrid()
+        If cmbDepartment.Items.Count > 0 Then cmbDepartment.SelectedIndex = 0
+    End Sub
 
-        ' Initialize DataGridView columns
-        dgvSchedule.ColumnCount = 4
-        dgvSchedule.Columns(0).Name = "Room"
-        dgvSchedule.Columns(1).Name = "Date"
-        dgvSchedule.Columns(2).Name = "Time"
-        dgvSchedule.Columns(3).Name = "Purpose"
+    Private Sub LoadDepartments()
+        cmbDepartment.Items.Clear()
+        Try
+            Using conn As New MySqlConnection(connectionString)
+                conn.Open()
+                Using cmd As New MySqlCommand("SELECT department_name FROM departments ORDER BY department_name", conn)
+                    Using rdr = cmd.ExecuteReader()
+                        While rdr.Read()
+                            cmbDepartment.Items.Add(rdr("department_name").ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error loading departments: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
-        ' Add Request button column
+    Private Sub SetupScheduleGrid()
+        dgvSchedule.Columns.Clear()
+        ' Hidden schedule_id column
+        Dim colId As New DataGridViewTextBoxColumn()
+        colId.Name = "schedule_id"
+        colId.Visible = False
+        dgvSchedule.Columns.Add(colId)
+
+        dgvSchedule.Columns.Add("Room", "Room")
+        dgvSchedule.Columns.Add("Date", "Date")
+        dgvSchedule.Columns.Add("Time", "Time")
+        dgvSchedule.Columns.Add("Purpose", "Purpose")
+
         Dim btnRequest As New DataGridViewButtonColumn()
         btnRequest.HeaderText = "Request"
+        btnRequest.Name = "RequestBtn"
         btnRequest.Text = "Request"
         btnRequest.UseColumnTextForButtonValue = True
         dgvSchedule.Columns.Add(btnRequest)
-
-        ' Display schedules for default department
-        FilterSchedule(cmbDepartment.SelectedItem.ToString())
     End Sub
 
     Private Sub cmbDepartment_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbDepartment.SelectedIndexChanged
-        FilterSchedule(cmbDepartment.SelectedItem.ToString())
+        LoadSchedule(cmbDepartment.SelectedItem.ToString())
     End Sub
 
-    Private Sub FilterSchedule(department As String)
+    Private Sub LoadSchedule(deptName As String)
         dgvSchedule.Rows.Clear()
-        For Each item In ScheduleList
-            If item.Department = department Then
-                dgvSchedule.Rows.Add(item.Room, item.Date, item.Time, item.Purpose)
-            End If
-        Next
+        Try
+            Using conn As New MySqlConnection(connectionString)
+                conn.Open()
+                Dim sql As String =
+                    "SELECT rs.schedule_id, rs.room, rs.date, rs.time, rs.purpose
+                     FROM room_schedule rs
+                     JOIN departments d ON rs.department_id = d.department_id
+                     WHERE d.department_name = @dept"
+                Using cmd As New MySqlCommand(sql, conn)
+                    cmd.Parameters.AddWithValue("@dept", deptName)
+                    Using rdr = cmd.ExecuteReader()
+                        While rdr.Read()
+                            dgvSchedule.Rows.Add(rdr("schedule_id"),
+                                                 rdr("room").ToString(),
+                                                 rdr("date").ToString(),
+                                                 rdr("time").ToString(),
+                                                 rdr("purpose").ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error loading schedule: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    ' Handle Request button click in DataGridView
     Private Sub dgvSchedule_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvSchedule.CellContentClick
         If e.RowIndex < 0 Then Return
-        If TypeOf dgvSchedule.Columns(e.ColumnIndex) Is DataGridViewButtonColumn Then
-            ' Open Form5
-            Dim requestForm As New Form5()
+        If dgvSchedule.Columns(e.ColumnIndex).Name <> "RequestBtn" Then Return
 
-            ' Link to running Form6
-            requestForm.MainForm = Application.OpenForms.OfType(Of Form6)().FirstOrDefault()
+        Dim scheduleId As Integer = Convert.ToInt32(dgvSchedule.Rows(e.RowIndex).Cells("schedule_id").Value)
+        Dim requestForm As New Form5()
+        requestForm.SelectedScheduleId = scheduleId
+        requestForm.txtPurpose.Text = dgvSchedule.Rows(e.RowIndex).Cells("Purpose").Value.ToString()
+        requestForm.cmbRoom.Text = dgvSchedule.Rows(e.RowIndex).Cells("Room").Value.ToString()
+        requestForm.cmbTimeSlot.Text = dgvSchedule.Rows(e.RowIndex).Cells("Time").Value.ToString()
 
-            ' Pre-fill Form5 with selected schedule info
-            requestForm.cmbRoom.SelectedItem = dgvSchedule.Rows(e.RowIndex).Cells("Room").Value.ToString()
-            requestForm.cmbTimeSlot.SelectedItem = dgvSchedule.Rows(e.RowIndex).Cells("Time").Value.ToString()
-            requestForm.txtPurpose.Text = dgvSchedule.Rows(e.RowIndex).Cells("Purpose").Value.ToString()
-
-            requestForm.ShowDialog()
+        If requestForm.ShowDialog() = DialogResult.OK Then
+            ' optional: show confirmation
         End If
     End Sub
-End Class
 
-' Class to hold schedule items
-Public Class ScheduleItem
-    Public Property Room As String
-    Public Property [Date] As String
-    Public Property Time As String
-    Public Property Purpose As String
-    Public Property Department As String
+    Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
+        If MessageBox.Show("Are you sure you want to exit and return to Login?",
+                       "Exit Confirmation",
+                       MessageBoxButtons.YesNo,
+                       MessageBoxIcon.Question) = DialogResult.Yes Then
 
-    Public Sub New(room As String, [date] As String, time As String, purpose As String, department As String)
-        Me.Room = room
-        Me.Date = [date]
-        Me.Time = time
-        Me.Purpose = purpose
-        Me.Department = department
+            'Find existing Form1 instance or create new one
+            Dim loginForm As Form1 = Application.OpenForms.OfType(Of Form1)().FirstOrDefault()
+            If loginForm Is Nothing Then
+                loginForm = New Form1()
+            End If
+
+            loginForm.Show()
+            Me.Hide() 'Use Hide to avoid issues if used multiple times
+        End If
     End Sub
 End Class
